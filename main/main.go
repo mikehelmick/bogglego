@@ -3,7 +3,8 @@ package main
 import (
   "bufio"
 	"fmt"
-	"github.com/mikehelmick/bogglego/trie"
+  "github.com/mikehelmick/bogglego/board"
+  "github.com/mikehelmick/bogglego/trie"
   "os"
 )
 
@@ -41,4 +42,7 @@ func main() {
   }
   dict := trie.New();
   loadDictionary(args[0], dict);
+
+  b := board.New();
+  b.PrintBoard();
 }

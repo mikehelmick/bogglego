@@ -5,7 +5,10 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/mikehelmick/bogglego/main",
     visibility = ["//visibility:private"],
-    deps = ["//trie:go_default_library"],
+    deps = [
+        "//board:go_default_library",
+        "//trie:go_default_library",
+    ],
 )
 
 go_binary(
