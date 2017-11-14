@@ -55,11 +55,19 @@ func New() *Board {
   return &board;
 }
 
+func (b *Board) Height() int {
+  return b.height;
+}
+
+func (b *Board) Width() int {
+  return b.width;
+}
+
 func (b *Board) GetAt(x, y int) (string, error) {
-  if x < 0 || x > b.height {
+  if x < 0 || x >= b.height {
     return "", &BoardError{fmt.Sprintf("X value of %v is out of bounds must be 0 =< x < %v", x, b.height)};
   }
-  if y < 0 || y < b.width {
+  if y < 0 || y >= b.width {
     return "", &BoardError{fmt.Sprintf("Y value of %v is out of bounds must be 0 =< y < %v", y, b.width)};
   }
   return b.board[x][y], nil;
