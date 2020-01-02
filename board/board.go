@@ -1,84 +1,95 @@
-package board;
+// Package board provides an implementation of a Boggle board. Representing
+// the dice.
+package board
 
 import (
-  "fmt"
-  "math/rand"
+	"fmt"
+	"math/rand"
 )
 
-type BoardError struct {
+// HEIGHT is the universal height of a boggle board
+const HEIGHT = 4
+
+// WIDTH is the universal width of a boggle board
+const WIDTH = 4
+
+// Error for the board package.
+type Error struct {
 	message string
 }
 
-func (e *BoardError) Error() string {
+func (e *Error) Error() string {
 	return e.message
 }
 
-type Board struct {
-  board [4][4]string;
-  height int;
-  width int;
-}
+// Board represents an individual instance of a Boggle board.
+type Board [HEIGHT][WIDTH]string
 
-// Gets a new random board
+// There are 16 dice in a standard Boggle game, these are the
+// individual dice.
+var dice = [16][6]string{
+	{"a", "a", "c", "i", "o", "t"}, // AACIOT
+	{"a", "h", "m", "o", "r", "s"}, // AHMORS
+	{"e", "g", "k", "l", "u", "y"}, // EGKLUY
+	{"a", "b", "i", "l", "t", "y"}, // ABILTY
+	{"a", "c", "d", "e", "m", "p"}, // ACDEMP
+	{"e", "g", "i", "n", "t", "v"}, // EGINTV
+	{"g", "i", "l", "r", "u", "w"}, // GILRUW
+	{"e", "l", "p", "s", "t", "u"}, // ELPSTU
+	{"d", "e", "n", "o", "s", "w"}, // DENOSW
+	{"a", "c", "e", "l", "r", "s"}, // ACELRS
+	{"a", "b", "j", "m", "o", "q"}, // ABJMOQ
+	{"e", "e", "f", "h", "i", "y"}, // EEFHIY
+	{"e", "h", "i", "n", "p", "s"}, // EHINPS
+	{"d", "k", "n", "o", "t", "u"}, // DKNOTU
+	{"a", "d", "e", "n", "v", "z"}, // ADENVZ
+	{"b", "i", "f", "o", "r", "x"}} // BIFORX
+
+// New creates a random boggle board.
 func New() *Board {
-  dice := make([][]string, 16);
-  dice[ 0] = []string{"a", "a", "c", "i", "o", "t"}; // AACIOT
-  dice[ 1] = []string{"a", "h", "m", "o", "r", "s"}; // AHMORS
-  dice[ 2] = []string{"e", "g", "k", "l", "u", "y"}; // EGKLUY
-  dice[ 3] = []string{"a", "b", "i", "l", "t", "y"}; // ABILTY
-  dice[ 4] = []string{"a", "c", "d", "e", "m", "p"}; // ACDEMP
-  dice[ 5] = []string{"e", "g", "i", "n", "t", "v"}; // EGINTV
-  dice[ 6] = []string{"g", "i", "l", "r", "u", "w"}; // GILRUW
-  dice[ 7] = []string{"e", "l", "p", "s", "t", "u"}; // ELPSTU
-  dice[ 8] = []string{"d", "e", "n", "o", "s", "w"}; // DENOSW
-  dice[ 9] = []string{"a", "c", "e", "l", "r", "s"}; // ACELRS
-  dice[10] = []string{"a", "b", "j", "m", "o", "q"}; // ABJMOQ
-  dice[11] = []string{"e", "e", "f", "h", "i", "y"}; // EEFHIY
-  dice[12] = []string{"e", "h", "i", "n", "p", "s"}; // EHINPS
-  dice[13] = []string{"d", "k", "n", "o", "t", "u"}; // DKNOTU
-  dice[14] = []string{"a", "d", "e", "n", "v", "z"}; // ADENVZ
-  dice[15] = []string{"b", "i", "f", "o", "r", "x"}; // BIFORX
+	board := &Board{}
 
-	var board Board;
-  board.height = 4;
-  board.width = 4;
+	order := rand.Perm(16)
+	pos := 0
+	for x := 0; x < HEIGHT; x++ {
+		for y := 0; y < WIDTH; y++ {
+			board[x][y] = dice[order[pos]][rand.Int()%6]
+			pos++
+		}
+	}
 
-  order := rand.Perm(16);
-  pos := 0;
-  for x := 0; x < board.height; x++ {
-    for y := 0; y < board.width; y++ {
-      board.board[x][y] = dice[order[pos]][rand.Int() % 6];
-      pos++;
-    }
-  }
-
-  return &board;
+	return board
 }
 
+// Height returns the height of the board
 func (b *Board) Height() int {
-  return b.height;
+	return HEIGHT
 }
 
+// Width returns the width of the board.
 func (b *Board) Width() int {
-  return b.width;
+	return WIDTH
 }
 
+// GetAt returns the character as a speciifc position.
+// And Error is returned if an invalid coordinate is specfified.
 func (b *Board) GetAt(x, y int) (string, error) {
-  if x < 0 || x >= b.height {
-    return "", &BoardError{fmt.Sprintf("X value of %v is out of bounds must be 0 =< x < %v", x, b.height)};
-  }
-  if y < 0 || y >= b.width {
-    return "", &BoardError{fmt.Sprintf("Y value of %v is out of bounds must be 0 =< y < %v", y, b.width)};
-  }
-  return b.board[x][y], nil;
+	if x < 0 || x >= HEIGHT {
+		return "", &Error{fmt.Sprintf("X value of %v is out of bounds must be 0 =< x < %v", x, HEIGHT)}
+	}
+	if y < 0 || y >= WIDTH {
+		return "", &Error{fmt.Sprintf("Y value of %v is out of bounds must be 0 =< y < %v", y, WIDTH)}
+	}
+	return b[x][y], nil
 }
 
+// PrintBoard writes the board to stdout.
 func (b *Board) PrintBoard() {
-  fmt.Println("Board:");
-  for x := 0; x < b.height; x++ {
-    for y := 0; y < b.width; y++ {
-      fmt.Printf("%s ", b.board[x][y]);
-    }
-    fmt.Printf("\n");
-  }
+	fmt.Println("Board:")
+	for x := 0; x < HEIGHT; x++ {
+		for y := 0; y < WIDTH; y++ {
+			fmt.Printf("%s ", b[x][y])
+		}
+		fmt.Printf("\n")
+	}
 }

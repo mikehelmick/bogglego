@@ -39,6 +39,13 @@ func TestAddWord(t *testing.T) {
 	}
 }
 
+func TestIsPrefixEmptyWord(t *testing.T) {
+	d := New()
+	if d.IsPrefix("") {
+		t.Errorf("Empty string was reported as a prefix, and shouldn't be.")
+	}
+}
+
 func TestIsPrefix(t *testing.T) {
 	d := New()
 	d.AddWord("word")
@@ -62,7 +69,7 @@ func TestIsWord(t *testing.T) {
 			t.Errorf("'%s' sholdn't be a word", w)
 		}
 	}
-	if !d.IsWord("word") {
-		t.Error("'word' should be a word")
+	if d.IsWord("pizza") {
+		t.Error("'pizza' should be a word")
 	}
 }
