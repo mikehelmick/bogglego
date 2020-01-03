@@ -1,8 +1,23 @@
 package trie
 
 import (
+	"fmt"
 	"testing"
 )
+
+func ExampleTrie() {
+	dict := New()
+	dict.AddWord("hello")
+	fmt.Printf("hello, isWord? %v\n", dict.IsWord("hello"))
+	fmt.Printf("goodbye, isWord? %v\n", dict.IsWord("goodbye"))
+	fmt.Printf("he, isPrefix? %v\n", dict.IsPrefix("he"))
+	fmt.Printf("help, isPrefix? %v\n", dict.IsPrefix("help"))
+	// Output:
+	// hello, isWord? true
+	// goodbye, isWord? false
+	// he, isPrefix? true
+	// help, isPrefix? false
+}
 
 func TestNew(t *testing.T) {
 	d := New()
