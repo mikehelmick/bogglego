@@ -12,3 +12,9 @@ Use the scripts directory
 ./scripts/sequential.sh
 ./scripts/parallel.sh
 ```
+
+# Run tests
+
+```
+go test ./...
+```
