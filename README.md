@@ -16,5 +16,6 @@ Use the scripts directory
 # Run tests
 
 ```
-go test ./...
+go test ./... -count 1
+go test ./... --bench . -count 2
 ```

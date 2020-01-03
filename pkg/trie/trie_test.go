@@ -73,3 +73,13 @@ func TestIsWord(t *testing.T) {
 		t.Error("'pizza' should be a word")
 	}
 }
+
+func BenchmarkIsWord(b *testing.B) {
+	d := New()
+	d.AddWord("hello")
+	d.AddWord("world")
+
+	for i := 0; i < b.N; i++ {
+		d.IsPrefix("h")
+	}
+}
