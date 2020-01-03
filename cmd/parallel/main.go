@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"sort"
@@ -11,6 +13,16 @@ import (
 	"github.com/mikehelmick/bogglego/pkg/board"
 	"github.com/mikehelmick/bogglego/pkg/trie"
 )
+
+type pos struct {
+	x, y int
+}
+
+var offsets = []pos{{-1, -1}, {-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}}
+
+func (p pos) add(o pos) pos {
+	return pos{p.x + o.x, p.y + o.y}
+}
 
 // Simple error check
 func check(e error) {
@@ -39,12 +51,12 @@ func loadDictionary(filename string, dict *trie.Trie) {
 	fmt.Printf("Loaded %v words.\n", wordCount)
 }
 
-func search(prefix string, x, y int, b *board.Board, dict *trie.Trie, visit []bool, ch chan string) {
-	word, err := b.GetAt(x, y)
+func search(prefix string, p pos, b *board.Board, dict *trie.Trie, visit []bool, ch chan string) {
+	word, err := b.GetAt(p.x, p.y)
 	if err != nil {
 		return
 	}
-	if visit[x*b.Width()+y] {
+	if visit[p.x*b.Width()+p.y] {
 		return
 	}
 
@@ -53,20 +65,19 @@ func search(prefix string, x, y int, b *board.Board, dict *trie.Trie, visit []bo
 		ch <- newWord
 	}
 	if dict.IsPrefix(newWord) {
-		visit[x*b.Width()+y] = true
-		search(newWord, x-1, y, b, dict, visit, ch)
-		search(newWord, x+1, y, b, dict, visit, ch)
-		search(newWord, x, y-1, b, dict, visit, ch)
-		search(newWord, x, y+1, b, dict, visit, ch)
-		visit[x*b.Width()+y] = false
+		visit[p.x*b.Width()+p.y] = true
+		for _, off := range offsets {
+			search(newWord, p.add(off), b, dict, visit, ch)
+		}
+		visit[p.x*b.Width()+p.y] = false
 	}
 }
 
-func startSearch(x, y int, b *board.Board, dict *trie.Trie, ch chan string) {
+func startSearch(p pos, b *board.Board, dict *trie.Trie, ch chan string) {
 	cap := b.Height() * b.Width()
 	visit := make([]bool, cap, cap)
 	// We'll ignore the error on the bootstrap
-	word, err := b.GetAt(x, y)
+	word, err := b.GetAt(p.x, p.y)
 	if err != nil {
 		panic(err)
 	}
@@ -75,24 +86,30 @@ func startSearch(x, y int, b *board.Board, dict *trie.Trie, ch chan string) {
 		ch <- word
 	}
 	if dict.IsPrefix(word) {
-		visit[x*b.Width()+y] = true
-		search(word, x-1, y, b, dict, visit, ch)
-		search(word, x+1, y, b, dict, visit, ch)
-		search(word, x, y-1, b, dict, visit, ch)
-		search(word, x, y+1, b, dict, visit, ch)
+		visit[p.x*b.Width()+p.y] = true
+		for _, off := range offsets {
+			search(word, p.add(off), b, dict, visit, ch)
+		}
 	}
 
 	ch <- "ENDOFLINE"
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-	args := os.Args[1:]
-	if len(args) != 1 {
+	seed := flag.Int("seed", 0, "random seed")
+	filename := flag.String("file", "", "name of the dictionary file to load")
+	flag.Parse()
+	if *seed == 0 {
+		rand.Seed(time.Now().UTC().UnixNano())
+	} else {
+		rand.Seed(int64(*seed))
+	}
+	log.Printf("%v", *filename)
+	if *filename == "" {
 		panic("You must provide a filename to load.")
 	}
 	dict := trie.New()
-	loadDictionary(args[0], dict)
+	loadDictionary(*filename, dict)
 
 	b := board.New()
 	b.PrintBoard()
@@ -106,13 +123,12 @@ func main() {
 
 	for x := 0; x < b.Height(); x++ {
 		for y := 0; y < b.Width(); y++ {
-			go startSearch(x, y, b, dict, ch)
+			go startSearch(pos{x, y}, b, dict, ch)
 		}
 	}
 
 	t := time.Now()
 	elapsed := t.Sub(start)
-	fmt.Printf("Solving took %v\n", elapsed)
 
 	ends := 0
 	var word string
@@ -124,12 +140,7 @@ func main() {
 				break
 			}
 		} else {
-			i, ok := words[word]
-			if !ok {
-				words[word] = 1
-			} else {
-				words[word] = i + 1
-			}
+			words[word]++
 		}
 	}
 
@@ -138,8 +149,9 @@ func main() {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	fmt.Printf("Found %v words\n", len(keys))
 	for _, k := range keys {
 		fmt.Printf("%s : %v\n", k, words[k])
 	}
+	fmt.Printf("Found %v words\n", len(keys))
+	fmt.Printf("Solving took %v\n", elapsed)
 }

@@ -1,2 +1,2 @@
 
-go run ./cmd/parallel/. TWL06.txt
+go run ./cmd/parallel/. --file=TWL06.txt

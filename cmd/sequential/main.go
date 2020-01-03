@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"sort"
@@ -11,6 +13,16 @@ import (
 	"github.com/mikehelmick/bogglego/pkg/board"
 	"github.com/mikehelmick/bogglego/pkg/trie"
 )
+
+type pos struct {
+	x, y int
+}
+
+var offsets = []pos{{-1, -1}, {-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}}
+
+func (p pos) add(o pos) pos {
+	return pos{p.x + o.x, p.y + o.y}
+}
 
 // Simple error check
 func check(e error) {
@@ -39,12 +51,12 @@ func loadDictionary(filename string, dict *trie.Trie) {
 	fmt.Printf("Loaded %v words.\n", wordCount)
 }
 
-func search(prefix string, x, y int, b *board.Board, dict *trie.Trie, visit []bool, words map[string]int) {
-	word, err := b.GetAt(x, y)
+func search(prefix string, p pos, b *board.Board, dict *trie.Trie, visit []bool, words map[string]int) {
+	word, err := b.GetAt(p.x, p.y)
 	if err != nil {
 		return
 	}
-	if visit[x*b.Width()+y] {
+	if visit[p.x*b.Width()+p.y] {
 		return
 	}
 
@@ -57,23 +69,29 @@ func search(prefix string, x, y int, b *board.Board, dict *trie.Trie, visit []bo
 		}
 	}
 	if dict.IsPrefix(newWord) {
-		visit[x*b.Width()+y] = true
-		search(newWord, x-1, y, b, dict, visit, words)
-		search(newWord, x+1, y, b, dict, visit, words)
-		search(newWord, x, y-1, b, dict, visit, words)
-		search(newWord, x, y+1, b, dict, visit, words)
-		visit[x*b.Width()+y] = false
+		visit[p.x*b.Width()+p.y] = true
+		for _, off := range offsets {
+			search(newWord, p.add(off), b, dict, visit, words)
+		}
+		visit[p.x*b.Width()+p.y] = false
 	}
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-	args := os.Args[1:]
-	if len(args) != 1 {
+	seed := flag.Int("seed", 0, "random seed")
+	filename := flag.String("file", "", "name of the dictionary file to load")
+	flag.Parse()
+	if *seed == 0 {
+		rand.Seed(time.Now().UTC().UnixNano())
+	} else {
+		rand.Seed(int64(*seed))
+	}
+	log.Printf("%v", *filename)
+	if *filename == "" {
 		panic("You must provide a filename to load.")
 	}
 	dict := trie.New()
-	loadDictionary(args[0], dict)
+	loadDictionary(*filename, dict)
 
 	b := board.New()
 	b.PrintBoard()
@@ -86,21 +104,22 @@ func main() {
 
 	for x := 0; x < b.Height(); x++ {
 		for y := 0; y < b.Width(); y++ {
-			search("", x, y, b, dict, visit, words)
+			search("", pos{x, y}, b, dict, visit, words)
 		}
 	}
 
 	t := time.Now()
 	elapsed := t.Sub(start)
-	fmt.Printf("Solving took %v\n", elapsed)
 
 	var keys []string
 	for k := range words {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	fmt.Printf("Found %v words\n", len(keys))
+
 	for _, k := range keys {
 		fmt.Printf("%s : %v\n", k, words[k])
 	}
+	fmt.Printf("Found %v words\n", len(keys))
+	fmt.Printf("Solving took %v\n", elapsed)
 }

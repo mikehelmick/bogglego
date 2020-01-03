@@ -1,2 +1,2 @@
 
-go run ./cmd/sequential/. TWL06.txt
+go run ./cmd/sequential/. --file=TWL06.txt
