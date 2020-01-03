@@ -1,5 +1,7 @@
 # bogglego
 
+![Build Status](https://travis-ci.com/mikehelmick/bogglego.svg?branch=master)
+
 A Boggle solver written in Go. Uses a Trie to represent the dictionary.
 There are two versions, a sequential implementation and parallel (from each
 spot).
