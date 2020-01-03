@@ -1,8 +1,14 @@
 # bogglego
-My first Go program, a boggle solver and a trie
 
-Requires bazel + go build rules to be installed.
+A Boggle solver written in Go. Uses a Trie to represent the dictionary.
+There are two versions, a sequential implementation and parallel (from each
+spot).
 
-Run with
+# To Run
 
-```bazel run main:main -- $(pwd)/TWL06.txt```
+Use the scripts directory
+
+```
+./scripts/sequential.sh
+./scripts/parallel.sh
+```
